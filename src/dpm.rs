@@ -12,10 +12,19 @@ macro_rules! json_option {
   };
 }
 
+macro_rules! current_path {
+  ($is_current_path:expr, $path_name:expr) => {
+    match $is_current_path {
+      false => $path_name,
+      true => ".".to_string(),
+    }
+  };
+}
+
 pub fn add(args: &mut [String]) -> Result<()> {
   match args {
     [] => {
-      let res = tools::json::write();
+      let res = tools::json::write(current_path!(true, "".to_string()));
       if res.is_err() {
         println!("Failed to write dependencies");
       }
@@ -26,7 +35,7 @@ pub fn add(args: &mut [String]) -> Result<()> {
         if res.is_err() {
           println!("Failed to add {}", dep);
         }
-        tools::json::write()?;
+        tools::json::write(current_path!(true, "".to_string()))?;
       }
     }
   };
@@ -35,7 +44,7 @@ pub fn add(args: &mut [String]) -> Result<()> {
 
 pub fn init(fold_name: Option<String>, current_path: bool) -> Result<()> {
   let current_dir = env::current_dir()?;
-  let def_name: String = fold_name.unwrap_or(
+  let def_name: String = fold_name.clone().unwrap_or(
     current_dir
       .iter()
       .last()
@@ -65,14 +74,13 @@ pub fn init(fold_name: Option<String>, current_path: bool) -> Result<()> {
     current_path,
     Option::from(def_name),
   )?;
-  tools::json::write()?;
   Ok(())
 }
 
 pub fn create(project: &str) -> std::io::Result<()> {
   println!(
     "{} Creating a new project...",
-    console::style("[]").green().bold()
+    console::style("[ ]").green().bold()
   );
   let res = std::fs::create_dir(project);
   match res.is_err() {
@@ -83,6 +91,7 @@ pub fn create(project: &str) -> std::io::Result<()> {
     ),
     false => {
       init(Option::from(project.to_string()), false)?;
+      tools::json::write(current_path!(false, project.to_string()))?;
       println!(
         r#"
 All done!

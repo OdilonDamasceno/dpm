@@ -64,11 +64,11 @@ pub fn read<P: AsRef<Path>>(path: P) -> Result<Value> {
   Ok(v)
 }
 
-pub fn write() -> Result<()> {
-  let file = File::create(".modules.json")?;
+pub fn write(path: String) -> Result<()> {
+  let file = File::create(format!("{}/.modules.json", path))?;
   let writer = BufWriter::new(file);
   let mut map = HashMap::new();
-  map.insert("imports", load_modules()?);
+  map.insert("imports", load_modules(path)?);
   println!(
     "{} Writing dependencies to modules.json...",
     style("[]").bold().green()
@@ -77,10 +77,11 @@ pub fn write() -> Result<()> {
   Ok(())
 }
 
-fn load_modules() -> Result<HashMap<String, String>> {
+fn load_modules(path: String) -> Result<HashMap<String, String>> {
   println!("{} Loading modules...", style("[]").bold().green());
   let mut map: HashMap<String, String> = HashMap::new();
-  let r = read("package-info.json")?;
+
+  let r = read(format!("{}/package-info.json", path))?;
   let deps: &serde_json::Map<String, Value> = r["deps"].as_object().unwrap();
 
   for (key, value) in deps {
